@@ -5,7 +5,7 @@
 public static final int   STRIP_PIXELS = 60;
 public static final float PIXEL_SPACING = 1.325;
 public static final float STRIP_SPACING = 22;
-public static final float STRIP_OFFSET = 6;
+public static final float STRIP_OFFSET = 3;
 
 static class Model extends LXModel {
 

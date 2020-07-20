@@ -23,15 +23,14 @@ void setup() {
   lx = new P3LX(this, model);
 
   lx.setPatterns(new LXPattern[] {
-
-    new BaseHuePattern(lx),
-    new IteratorTestPattern(lx),
-
-    new ColorSwatches(lx, 6),
-    new Salmon(lx),
-    new Jellyfish(lx),
+    
+    new Horizon(lx),
     new Spirals(lx),
-    new Interference(lx),
+    new Jellyfish(lx),
+    new ColorSwatches(lx, 6),
+    
+    //new BaseHuePattern(lx),
+    //new IteratorTestPattern(lx),
 
     });
 

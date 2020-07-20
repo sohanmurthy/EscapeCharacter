@@ -4,6 +4,7 @@ Color Swatches
 
 class ColorSwatches extends LXPattern{
 
+  final DiscreteParameter hueAdjust = new DiscreteParameter("Hue", 0, 0, 360);
 
   class Swatch extends LXLayer {
 
@@ -11,6 +12,7 @@ class ColorSwatches extends LXPattern{
     private final SinLFO bright = new SinLFO(-80,100, sync);
     private final SinLFO sat = new SinLFO(35,55, sync);
     private final TriangleLFO hueValue = new TriangleLFO(0, 44, sync);
+    private final TriangleLFO hueOsc = new TriangleLFO(190, 340, 3.37*MINUTES);
 
     private int sPixel;
     private int fPixel;
@@ -25,6 +27,7 @@ class ColorSwatches extends LXPattern{
       addModulator(bright.randomBasis()).start();
       addModulator(sat.randomBasis()).start();
       addModulator(hueValue.randomBasis()).start();
+      addModulator(hueOsc.randomBasis()).start();
     }
 
     public void run(double deltaMs) {
@@ -33,7 +36,9 @@ class ColorSwatches extends LXPattern{
 
       for(int i = sPixel; i < fPixel; i++){
         blendColor(i, LXColor.hsb(
-          lx.getBaseHuef() + hueValue.getValuef() + hOffset,
+          //lx.getBaseHuef() + hueValue.getValuef() + hOffset, //auto hue (full spectrum)
+          //hueAdjust.getValuef() + hueValue.getValuef() + hOffset, //manual hue control
+          hueOsc.getValuef() + hueValue.getValuef() + hOffset, //auto hue (limited spectrum)
           //lx.getBaseHuef() + hOffset,
           s,
           b
@@ -45,6 +50,7 @@ class ColorSwatches extends LXPattern{
 
   ColorSwatches(LX lx, int num_sec){
    super(lx);
+   addParameter(hueAdjust);
    //size of each swatch in pixels
     final int section = num_sec;
    for(int s = 0; s <= model.size-section; s+=section){
@@ -61,206 +67,6 @@ class ColorSwatches extends LXPattern{
     lx.cycleBaseHue(3.37*MINUTES);
   }
 
-}
-
-/************
-
-Interference
-
-*************/
-
-class Interference extends LXPattern {
-
-      class Concentric extends LXLayer{
-
-        private final SinLFO sync = new SinLFO(13*SECONDS,21*SECONDS, 34*SECONDS);
-        private final SinLFO speed = new SinLFO(7700,3200, sync);
-        private final SinLFO tight = new SinLFO(10,15, sync);
-
-        private final TriangleLFO cy = new TriangleLFO(model.yMin, model.yMax, random(2*MINUTES+sync.getValuef(),3*MINUTES+sync.getValuef()));
-        private final SawLFO move = new SawLFO(TWO_PI, 0, speed);
-        
-        private final TriangleLFO hue = new TriangleLFO(0,88, sync);
-
-        private final float cx;
-        private final int slope = 25;
-
-        Concentric(LX lx, float x){
-        super(lx);
-        cx = x;
-        addModulator(sync.randomBasis()).start();
-        addModulator(speed.randomBasis()).start();
-        addModulator(tight.randomBasis()).start();
-        addModulator(move.randomBasis()).start();
-        addModulator(hue.randomBasis()).start();
-        addModulator(cy.randomBasis()).start();
-        }
-
-         public void run(double deltaMs) {
-           for(LXPoint p : model.points) {
-           float dx = (dist(p.x, p.y, cx, cy.getValuef()))/ slope;
-           float ds = (dist(p.x, p.y, cx, cy.getValuef()))/ (slope/1.1);
-           float b = 12 + 12 * sin(dx * tight.getValuef() + move.getValuef());
-           float s = 50 + 50 * sin(ds * tight.getValuef()/1.3 + move.getValuef());;
-             blendColor(p.index, LXColor.hsb(
-             lx.getBaseHuef()+hue.getValuef(),
-             
-             s,
-             b
-             ), LXColor.Blend.ADD);
-           }
-         }
-      }
-
-  Interference(LX lx){
-    super(lx);
-    addLayer(new Concentric(lx, model.xMin));
-    addLayer(new Concentric(lx, model.cx));
-    addLayer(new Concentric(lx, model.xMax));
-  }
-
-  public void run(double deltaMs) {
-    setColors(#000000);
-    lx.cycleBaseHue(7.86*MINUTES);
-  }
-
-}
-
-
-/******************
-Salmon
-*******************/
-
-
-class Salmon extends LXPattern {
-  
-  final float size = 12;
-  final float vLow = 8;
-  final float vHigh = 20;
-  final int bright = 16;
-  final int num = 3;
-  
-   Salmon(LX lx) {
-    super(lx);
-    for (int i = 0; i < num; ++i) {
-      addLayer(new Fish(lx));
-      addLayer(new RightFish(lx));
-      lx.cycleBaseHue(12.33*MINUTES);
-      
-    }
-  }
-  
-  public void run(double deltaMs) {
-    LXColor.scaleBrightness(colors, max(0, (float) (1 - deltaMs / 100.f)), null);
-  }
-  
-  
-  
-  class Fish extends LXLayer {
-    
-    private final Accelerator xPos = new Accelerator(0, 0, 0);
-    private final Accelerator yPos = new Accelerator(0, 0, 0);
-     
-    Fish(LX lx) {
-      super(lx);
-      addModulator(xPos).start();
-      addModulator(yPos).start();
-      
-      xPos.setValue(random(model.xMin, model.cx));
-      xPos.setVelocity(random(vLow, vHigh));
-      yPos.setValue(random(model.yMin-5, model.yMax+5));
-      yPos.setVelocity(random(0,0));
-      
-    }
-    
-    private void init_touch() {
-
-      xPos.setValue(random(model.xMin-3, model.xMin));
-      xPos.setVelocity(random(vLow, vHigh));
-      yPos.setValue(random(model.yMin, model.yMax));
-      yPos.setVelocity(random(-5,5));
-
-    }
-    
-    private void init_fish() {
-      
-       for (LXPoint p : model.points) {
-          float b = bright - (bright / size)*dist(p.x/4, p.y, xPos.getValuef(), yPos.getValuef());
-          float s = b/3;
-        if (b > 0) {
-          blendColor(p.index, LXColor.hsb(
-            (lx.getBaseHuef() + (p.y / model.yRange) * 120) % 360,
-            min(65, (100/s)*abs(p.y - yPos.getValuef())), 
-            b), LXColor.Blend.ADD);
-          }
-        } 
-      
-      }
-
-      public void run(double deltaMs) {
-        init_fish();
-      
-      if (xPos.getValue() > model.cx) {
-        init_touch();
-      }
-
-    }
-    
-  }
-  
-  
-  class RightFish extends LXLayer {
-    
-    private final Accelerator xPos = new Accelerator(0, 0, 0);
-    private final Accelerator yPos = new Accelerator(0, 0, 0);
-     
-    RightFish(LX lx) {
-      super(lx);
-      addModulator(xPos).start();
-      addModulator(yPos).start();
-      
-      xPos.setValue(random(model.cx, model.xMax));
-      xPos.setVelocity(random(-vHigh, -vLow));
-      yPos.setValue(random(model.yMin-5, model.yMax+5));
-      yPos.setVelocity(random(-5,5));
-      
-    }
-    
-    private void init_touch() {
-
-      xPos.setValue(random(model.cx, model.cx+3));
-      xPos.setVelocity(random(-vHigh, -vLow));
-      yPos.setValue(random(model.yMin, model.yMax));
-      yPos.setVelocity(random(0,0));
-
-    }
-    
-    private void init_fish() {
-      
-       for (LXPoint p : model.points) {
-          float b = bright - (bright / size)*dist(p.x/4, p.y, xPos.getValuef(), yPos.getValuef());
-          float s = b/3;
-        if (b > 0) {
-          blendColor(p.index, LXColor.hsb(
-            (lx.getBaseHuef() + (p.y / model.yRange) * 90) % 360,
-            min(65, (100/s)*abs(p.y - yPos.getValuef())), 
-            b), LXColor.Blend.ADD);
-          }
-        } 
-      
-      }
-
-      public void run(double deltaMs) {
-        init_fish();
-      
-      if (xPos.getValue() < model.xMin) {
-        init_touch();
-      }
-
-    }
-    
-  }
-    
 }
 
 
@@ -384,7 +190,7 @@ class Spirals extends LXPattern {
         float vy2 = model.yRange/4 * sin(off2.getValuef() + (p.x - model.cx) / wth2.getValuef());
         float vy = model.ay + vy1 + vy2;
         
-        float thickness = 6 + 3 * sin(off3.getValuef() + (p.x - model.cx) / wth3.getValuef());
+        float thickness = 9 + 5 * sin(off3.getValuef() + (p.x - model.cx) / wth3.getValuef());
         float ts = thickness/1.2;
 
         blendColor(p.index, LXColor.hsb(
@@ -408,4 +214,80 @@ class Spirals extends LXPattern {
     setColors(#000000);
     lx.cycleBaseHue(9.67*MINUTES);
   }
+}
+
+/******************
+Horizon
+*******************/
+
+class Horizon extends LXPattern {
+  
+  final DiscreteParameter hueAdjust = new DiscreteParameter("Hue", 0, 0, 360);
+  
+  Horizon(LX lx) {
+    super(lx);
+    addParameter(hueAdjust);
+    for (int i = 0; i < 12; ++i) {
+      addLayer(new HorizonLine(lx, i*14));
+    }
+    
+  }
+  
+  public void run(double deltaMs) {
+    setColors(#000000);
+  }
+  
+  
+  class HorizonLine extends LXLayer {
+    
+    final private Click posChange = new Click(random(15*SECONDS, 45*SECONDS));
+    final private QuadraticEnvelope yPos = new QuadraticEnvelope(random(model.yMin, model.yMax),0,0).setEase(QuadraticEnvelope.Ease.BOTH);
+    final private SinLFO interval = new SinLFO(15*SECONDS, 45*SECONDS, 4*MINUTES);
+    final private SinLFO thickness = new SinLFO(13, 8, interval);
+    final private TriangleLFO hueOsc = new TriangleLFO(165, 290, 5*MINUTES);
+    final private float hOffset;
+    
+    private void init() {
+      yPos.setRangeFromHereTo(random(model.yMin, model.yMax)).setPeriod(random(20*SECONDS, 35*SECONDS)).start();
+    }
+
+    
+    HorizonLine(LX lx, float o){
+      super(lx);
+      addModulator(posChange).start();
+      addModulator(yPos);
+      addModulator(interval.randomBasis()).start();
+      addModulator(thickness.randomBasis()).start();
+      addModulator(hueOsc.randomBasis()).start();
+      hOffset = o;
+    }
+    
+     public void run(double deltaMs) {
+      
+      if (posChange.click()) {
+        init();
+      } 
+       
+      for (LXPoint p : model.points) {
+        
+        float b = 100 - 100 * abs(p.y - yPos.getValuef())/model.yRange * thickness.getValuef();
+        float s = 100;
+        if (b > 0) {
+            blendColor(p.index,
+                       LXColor.hsb(
+                                   //hueAdjust.getValuef() + hOffset,
+                                   hueOsc.getValuef() + hOffset,
+                                   s,
+                                   b
+                                   ),
+                       LXColor.Blend.LIGHTEST
+                       );
+        }
+        
+      }
+    }
+    
+  }
+  
+  
 }
