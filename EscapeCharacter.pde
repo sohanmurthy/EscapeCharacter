@@ -26,7 +26,6 @@ void setup() {
     
     new Horizon(lx),
     new Spirals(lx),
-    new Jellyfish(lx),
     new ColorSwatches(lx, 6),
     
     //new BaseHuePattern(lx),
@@ -35,13 +34,13 @@ void setup() {
     });
 
 
-  final LXTransition multiply = new MultiplyTransition(lx).setDuration(2*SECONDS);
+  final LXTransition multiply = new MultiplyTransition(lx).setDuration(22*SECONDS);
 
   for (LXPattern p : lx.getPatterns()) {
     p.setTransition(multiply);
   }
 
-  //lx.enableAutoTransition(10*MINUTES);
+  lx.enableAutoTransition(120*MINUTES);
 
   output = buildOutput();
 

@@ -70,89 +70,27 @@ class ColorSwatches extends LXPattern{
 }
 
 
-/**********************
-Jellyfish
-**********************/
-
-
-class Jellyfish extends LXPattern {
-  Jellyfish(LX lx) {
-    super(lx);
-    for (int i = 0; i < 8; ++i) {
-      addLayer(new Jelly(lx, i*7.625));
-    }
-  }
-  
-  public void run(double deltaMs) {
-    setColors(#000000);
-    lx.cycleBaseHue(6.33*MINUTES);
-  }
-  
-  class Jelly extends LXLayer {
-    
-    private SinLFO xp = new SinLFO(random(19000*5, 28000*5), random(32000*5, 43000*5), random(31000, 53000));
-    private SinLFO yp = new SinLFO(random(19000, 28000), random(32000, 43000), random(31000, 53000));
-    private SinLFO x = new SinLFO(model.xMin, model.xMax, xp);
-    private SinLFO y = new SinLFO(model.yMin, model.yMax, yp);
-    private SinLFO r = new SinLFO(20, random(28, 34), random(2500, 3500));
-    final SinLFO breath;
-    private float hOffset;
-    
-    //noise saturation
-    private float accum = 0;
-    final float spd = 0.5;
-    final float range = 100;
-    final float scale = 0.2;
-    
-    Jelly(LX lx, float o) {
-      super(lx);
-      startModulator(xp.randomBasis());
-      startModulator(yp.randomBasis());
-      startModulator(x.randomBasis());
-      startModulator(y.randomBasis());
-      startModulator(r.randomBasis());
-      startModulator(breath = new SinLFO(0, startModulator(new SinLFO(0, 3, random(9000, 17000))), random(5000, 9000)));
-      
-      hOffset = o;
-    }
-    
-    public void run(double deltaMs) {
-      float xf = x.getValuef();
-      float yf = y.getValuef();
-      float rf = r.getValuef();
-      float bf = breath.getValuef();
-      
-      float falloff = 12;
-      
-      accum += deltaMs/1000. * spd;
-      float sv = scale;
-      
-      for (LXPoint p : model.points) {
-        //float b = 100 - falloff*abs(dist(p.x, p.y, xf, yf) - (rf + bf));
-        float b = 100 - (100/rf) * dist(p.x, p.y, xf, yf);
-        float s = constrain(50 + range*(-1 + 2*noise(sv*p.x, sv*p.y, accum)), 0, 100);
-        if (b > 0) {
-            blendColor(p.index,
-                       LXColor.hsb(
-                                   lx.getBaseHuef() + hOffset,
-                                   s, //complex noise pattern
-                                   //100, //simple saturation
-                                   b
-                                 ),
-                       LXColor.Blend.LIGHTEST);
-        }
-      }
-    }
-  }
-  
-}
-
-
 /******************
 Spirals
 *******************/
 
 class Spirals extends LXPattern {
+  
+  final DiscreteParameter hueAdjust = new DiscreteParameter("Hue", 0, 0, 360);
+  
+  Spirals(LX lx) {
+    super(lx);
+    addParameter(hueAdjust);
+    for (int i = 0; i < 12; ++i) {
+      addLayer(new Wave(lx, i*6));
+    }
+  }
+
+  public void run(double deltaMs) {
+    setColors(#000000);
+    lx.cycleBaseHue(9.67*MINUTES);
+  }
+  
   class Wave extends LXLayer {
     
     final private SinLFO rate1 = new SinLFO(200000*2, 290000*2, 17000);
@@ -191,11 +129,12 @@ class Spirals extends LXPattern {
         float vy = model.ay + vy1 + vy2;
         
         float thickness = 9 + 5 * sin(off3.getValuef() + (p.x - model.cx) / wth3.getValuef());
-        float ts = thickness/1.2;
+        float ts = thickness/1.4;
 
         blendColor(p.index, LXColor.hsb(
         (lx.getBaseHuef() + hOffset + (p.x / model.xRange) * 160) % 360,
-        min(65, (100/ts)*abs(p.y - vy)), 
+        //(hueAdjust.getValuef() + hOffset + (p.x / model.xRange) * 160) % 360,
+        min(100, (100/ts)*abs(p.y - vy)), 
         max(0, 40 - (40/thickness)*abs(p.y - vy))
         ), LXColor.Blend.ADD);
       }
@@ -203,17 +142,6 @@ class Spirals extends LXPattern {
    
   }
 
-  Spirals(LX lx) {
-    super(lx);
-    for (int i = 0; i < 12; ++i) {
-      addLayer(new Wave(lx, i*6));
-    }
-  }
-
-  public void run(double deltaMs) {
-    setColors(#000000);
-    lx.cycleBaseHue(9.67*MINUTES);
-  }
 }
 
 /******************
@@ -244,7 +172,7 @@ class Horizon extends LXPattern {
     final private QuadraticEnvelope yPos = new QuadraticEnvelope(random(model.yMin, model.yMax),0,0).setEase(QuadraticEnvelope.Ease.BOTH);
     final private SinLFO interval = new SinLFO(15*SECONDS, 45*SECONDS, 4*MINUTES);
     final private SinLFO thickness = new SinLFO(13, 8, interval);
-    final private TriangleLFO hueOsc = new TriangleLFO(165, 290, 5*MINUTES);
+    final private TriangleLFO hueOsc = new TriangleLFO(255, 290, 5*MINUTES);
     final private float hOffset;
     
     private void init() {

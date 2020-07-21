@@ -25,12 +25,10 @@ static class Model extends LXModel {
       
       addPoints(new PixelStrip((STRIP_SPACING*2) + (STRIP_OFFSET*2),  0,  82));
       addPoints(new PixelStrip((STRIP_SPACING*3) + (STRIP_OFFSET*2),  0,  98));
-
       
     }
     
   }
-  
 }
 
 
