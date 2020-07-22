@@ -1,6 +1,6 @@
 /********************************************************
 
-  ESCAPE CHARACTER
+  ESCAPE CHARACTER, Sohan Murthy, 2020
 
   ESCAPE CHARACTER is an LED art installation located
   in a private residence in Oakland, CA.
@@ -40,20 +40,19 @@ void setup() {
     p.setTransition(multiply);
   }
 
-  lx.enableAutoTransition(120*MINUTES);
+  lx.enableAutoTransition(123*MINUTES);
 
   output = buildOutput();
 
-  // Adds UI elements -- COMMENT all of this out if running on Linux in a headless environment
+  // Adds UI elements -- COMMENT all of this out if running on in a headless environment
   size(800, 600, P3D);
   lx.ui.addLayer(
     new UI3dContext(lx.ui)
     .setCenter(model.cx, model.cy, model.cz)
-    .setRadius(12*FEET)
+    .setRadius(9*FEET)
     .setRadiusBounds(3*FEET, 20*FEET)
     .addComponent(pointCloud = new UIPointCloud(lx, model).setPointSize(8))
     );
-
   lx.ui.addLayer(new UIChannelControl(lx.ui, lx, 0, 0));
   lx.ui.addLayer(new UIOutput(lx.ui, width - 144, 4));
 

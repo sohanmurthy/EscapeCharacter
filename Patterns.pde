@@ -3,14 +3,29 @@ Color Swatches
 *******************/
 
 class ColorSwatches extends LXPattern{
+  
+  ColorSwatches(LX lx, int num_sec){
+   super(lx);
+   //size of each swatch in pixels
+    final int section = num_sec;
+   for(int s = 0; s <= model.size-section; s+=section){
+     if((s+section) % (section*2) == 0){
+     addLayer(new Swatch(lx, s, s+section, 28));
+     }else{
+       addLayer(new Swatch(lx, s, s+section, 0));
+     }
+   }
+  }
 
-  final DiscreteParameter hueAdjust = new DiscreteParameter("Hue", 0, 0, 360);
+  public void run(double deltaMs) {
+    setColors(#000000);
+  }
 
   class Swatch extends LXLayer {
 
-    private final SinLFO sync = new SinLFO(8*SECONDS, 14*SECONDS, 39*SECONDS);
-    private final SinLFO bright = new SinLFO(-80,100, sync);
-    private final SinLFO sat = new SinLFO(35,55, sync);
+    private final SinLFO sync = new SinLFO(6*SECONDS, 10*SECONDS, 49*SECONDS);
+    private final SinLFO bright = new SinLFO(20,100, sync);
+    private final SinLFO sat = new SinLFO(45,65, sync);
     private final TriangleLFO hueValue = new TriangleLFO(0, 44, sync);
     private final TriangleLFO hueOsc = new TriangleLFO(190, 340, 3.37*MINUTES);
 
@@ -36,35 +51,13 @@ class ColorSwatches extends LXPattern{
 
       for(int i = sPixel; i < fPixel; i++){
         blendColor(i, LXColor.hsb(
-          //lx.getBaseHuef() + hueValue.getValuef() + hOffset, //auto hue (full spectrum)
-          //hueAdjust.getValuef() + hueValue.getValuef() + hOffset, //manual hue control
-          hueOsc.getValuef() + hueValue.getValuef() + hOffset, //auto hue (limited spectrum)
-          //lx.getBaseHuef() + hOffset,
+          hueOsc.getValuef() + hueValue.getValuef() + hOffset,
           s,
           b
           ), LXColor.Blend.LIGHTEST);
         }
     }
 
-  }
-
-  ColorSwatches(LX lx, int num_sec){
-   super(lx);
-   addParameter(hueAdjust);
-   //size of each swatch in pixels
-    final int section = num_sec;
-   for(int s = 0; s <= model.size-section; s+=section){
-     if((s+section) % (section*2) == 0){
-     addLayer(new Swatch(lx, s, s+section, 28));
-     }else{
-       addLayer(new Swatch(lx, s, s+section, 0));
-     }
-   }
-  }
-
-  public void run(double deltaMs) {
-    setColors(#000000);
-    lx.cycleBaseHue(3.37*MINUTES);
   }
 
 }
@@ -75,12 +68,9 @@ Spirals
 *******************/
 
 class Spirals extends LXPattern {
-  
-  final DiscreteParameter hueAdjust = new DiscreteParameter("Hue", 0, 0, 360);
-  
+    
   Spirals(LX lx) {
     super(lx);
-    addParameter(hueAdjust);
     for (int i = 0; i < 12; ++i) {
       addLayer(new Wave(lx, i*6));
     }
@@ -128,12 +118,11 @@ class Spirals extends LXPattern {
         float vy2 = model.yRange/4 * sin(off2.getValuef() + (p.x - model.cx) / wth2.getValuef());
         float vy = model.ay + vy1 + vy2;
         
-        float thickness = 9 + 5 * sin(off3.getValuef() + (p.x - model.cx) / wth3.getValuef());
+        float thickness = 11 + 6 * sin(off3.getValuef() + (p.x - model.cx) / wth3.getValuef());
         float ts = thickness/1.4;
 
         blendColor(p.index, LXColor.hsb(
         (lx.getBaseHuef() + hOffset + (p.x / model.xRange) * 160) % 360,
-        //(hueAdjust.getValuef() + hOffset + (p.x / model.xRange) * 160) % 360,
         min(100, (100/ts)*abs(p.y - vy)), 
         max(0, 40 - (40/thickness)*abs(p.y - vy))
         ), LXColor.Blend.ADD);
@@ -149,12 +138,9 @@ Horizon
 *******************/
 
 class Horizon extends LXPattern {
-  
-  final DiscreteParameter hueAdjust = new DiscreteParameter("Hue", 0, 0, 360);
-  
+   
   Horizon(LX lx) {
     super(lx);
-    addParameter(hueAdjust);
     for (int i = 0; i < 12; ++i) {
       addLayer(new HorizonLine(lx, i*14));
     }
@@ -203,7 +189,6 @@ class Horizon extends LXPattern {
         if (b > 0) {
             blendColor(p.index,
                        LXColor.hsb(
-                                   //hueAdjust.getValuef() + hOffset,
                                    hueOsc.getValuef() + hOffset,
                                    s,
                                    b
