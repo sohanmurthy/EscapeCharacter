@@ -4,6 +4,8 @@ ESCAPE CHARACTER
 <br>
 *2020*
 
+<img src="https://github.com/sohanmurthy/EscapeCharacter/blob/master/img/escapechar.jpg" width = 60%%>
+
 ESCAPE CHARACTER is an LED art installation located in a private residence in Oakland, CA.
 
 ### Installation:
